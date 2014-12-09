@@ -43,16 +43,15 @@ public class MainNav extends Activity {
     private RemoteDeckOfCards mRemoteDeckOfCards;
     private RemoteResourceStore mRemoteResourceStore;
     private CardImage[] mCardImages;
-    //private ToqBroadcastReceiver toqReceiver;
+    private ToqBroadcastReceiver toqReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_nav);
-
         mDeckOfCardsManager = DeckOfCardsManager.getInstance(getApplicationContext());
-        setupUI();
-
+        toqReceiver = new ToqBroadcastReceiver();
+        init();
 
     }
 
@@ -72,7 +71,11 @@ public class MainNav extends Activity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.install_button) {
+            install();
+            return true;
+        } else if (id == R.id.uninstall_button) {
+            uninstall();
             return true;
         }
 
@@ -88,7 +91,7 @@ public class MainNav extends Activity {
                 sendNotification();
             }
         });
-        */
+
         findViewById(R.id.install_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -102,7 +105,7 @@ public class MainNav extends Activity {
                 uninstall();
             }
         });
-        /*
+
         findViewById(R.id.add_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -120,13 +123,11 @@ public class MainNav extends Activity {
     }
 
 
-    private void sendNotification() {
-        String[] message = new String[2];
-        message[0] = "Message 1";
-        message[1] = "Message 2";
+    private void sendNotification(String[] notificationMsg) {
+
         // Create a NotificationTextCard
         NotificationTextCard notificationCard = new NotificationTextCard(System.currentTimeMillis(),
-                "Notification Title", message);
+                "Notification Title", notificationMsg);
 
         // Draw divider between lines of text
         notificationCard.setShowDivider(true);
@@ -144,6 +145,22 @@ public class MainNav extends Activity {
             Toast.makeText(this, "Failed to send Notification", Toast.LENGTH_SHORT).show();
         }
     }
+
+    protected void onStart() {
+        super.onStart();
+
+        if (!mDeckOfCardsManager.isConnected()) {
+            try {
+
+                mDeckOfCardsManager.connect();
+
+            } catch (RemoteDeckOfCardsException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
     /**
      * Installs applet to Toq watch if app is not yet installed
      */

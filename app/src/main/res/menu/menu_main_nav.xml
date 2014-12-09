@@ -9,6 +9,6 @@
         android:id="@+id/uninstall_button"
         android:orderInCategory="2"
         android:showAsAction="never"
-        android:title="UnInstall Toq App"/>
+        android:title="Uninstall Toq App"/>
 
 </menu>
