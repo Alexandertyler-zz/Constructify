@@ -9,6 +9,8 @@
     <ImageButton
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/ic_launcher"/>
+        android:background="@drawable/ic_launcher"
+        android:onClick="alertAndChange"
+        android:id="@+id/taskButton"/>
 
 </RelativeLayout>

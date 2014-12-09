@@ -1,7 +1,13 @@
 package edu.berkeley.constructify;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.NotificationCompat;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -12,9 +18,12 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.qualcomm.toq.smartwatch.api.v1.deckofcards.Constants;
+import com.qualcomm.toq.smartwatch.api.v1.deckofcards.DeckOfCardsEventListener;
 import com.qualcomm.toq.smartwatch.api.v1.deckofcards.card.Card;
 import com.qualcomm.toq.smartwatch.api.v1.deckofcards.card.ListCard;
 import com.qualcomm.toq.smartwatch.api.v1.deckofcards.card.NotificationTextCard;
@@ -37,7 +46,9 @@ public class MainNav extends Activity {
     //TOQ VARS
     private final static String PREFS_FILE= "prefs_file";
     private final static String DECK_OF_CARDS_KEY= "deck_of_cards_key";
-    private final static String DECK_OF_CARDS_VERSION_KEY= "deck_of_cards_version_key";
+    private final static String DECK_OF_CARDS_VERSION_KEY= "01";
+
+    private DeckOfCardsEventListener deckOfCardsEventListener;
 
     private DeckOfCardsManager mDeckOfCardsManager;
     private RemoteDeckOfCards mRemoteDeckOfCards;
@@ -48,9 +59,30 @@ public class MainNav extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main_nav);
+
+
         mDeckOfCardsManager = DeckOfCardsManager.getInstance(getApplicationContext());
         toqReceiver = new ToqBroadcastReceiver();
+
+        deckOfCardsEventListener= new DeckOfCardsEventListener() {
+            @Override
+            public void onCardOpen(String s) {
+                appNotify();
+            }
+            @Override
+            public void onCardVisible(String s) {}
+            @Override
+            public void onCardInvisible(String s) {}
+            @Override
+            public void onCardClosed(String s) {}
+            @Override
+            public void onMenuOptionSelected(String s, String s2) {}
+            @Override
+            public void onMenuOptionSelected(String s, String s2, String s3) {}
+        };
+
         init();
 
     }
@@ -82,52 +114,35 @@ public class MainNav extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    public void appNotify() {
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext())
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle("Constructify Update")
+                .setContentText("A recent task has been updated by a worker.");
 
-    private void setupUI() {
-        /*
-        findViewById(R.id.send_notif_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sendNotification();
-            }
-        });
+        Intent resultIntent = new Intent(this, MainNav.class);
+        PendingIntent resultPendingIntent = PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mBuilder.setContentIntent(resultPendingIntent);
 
-        findViewById(R.id.install_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                install();
-            }
-        });
+        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        manager.notify(1, mBuilder.build());
 
-        findViewById(R.id.uninstall_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                uninstall();
-            }
-        });
+        Toast.makeText(this, "A recent task has been updated by a worker.", Toast.LENGTH_LONG).show();
 
-        findViewById(R.id.add_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                addSimpleTextCard();
-            }
-        });
+        //ImageButton imageButton = (ImageButton) findViewById(R.id.taskButton);
+        //imageButton.setImageResource(R.drawable.placeholder);
 
-        findViewById(R.id.remove_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                removeDeckOfCards();
-            }
-        });
-        */
     }
 
 
-    private void sendNotification(String[] notificationMsg) {
+    private void sendNotification() {
+        String[] notificationMsg = new String[2];
+        notificationMsg[0] = "Your main task has been updated.";
+
 
         // Create a NotificationTextCard
         NotificationTextCard notificationCard = new NotificationTextCard(System.currentTimeMillis(),
-                "Notification Title", notificationMsg);
+                "Task Update", notificationMsg);
 
         // Draw divider between lines of text
         notificationCard.setShowDivider(true);
@@ -220,16 +235,15 @@ public class MainNav extends Activity {
     /**
      * Adds a deck of cards to the applet
      */
-    private void addSimpleTextCard() {
-        ListCard listCard = mRemoteDeckOfCards.getListCard();
+    private void addSimpleTextCard(ListCard listCard) {
         int currSize = listCard.size();
 
         // Create a SimpleTextCard with 1 + the current number of SimpleTextCards
         SimpleTextCard simpleTextCard = new SimpleTextCard(Integer.toString(currSize+1));
 
-        simpleTextCard.setHeaderText("Header: " + Integer.toString(currSize+1));
-        simpleTextCard.setTitleText("Title: " + Integer.toString(currSize+1));
-        String[] messages = {"Message: " + Integer.toString(currSize+1)};
+        simpleTextCard.setHeaderText("Constructify");
+        simpleTextCard.setTitleText("Task Update");
+        String[] messages = {"Your new active task is:", "Task B", "Please update your previous task completion percentage"};
         simpleTextCard.setMessageText(messages);
         simpleTextCard.setReceivingEvents(false);
         simpleTextCard.setShowDivider(true);
@@ -391,12 +405,38 @@ public class MainNav extends Activity {
 
         ListCard listCard= new ListCard();
 
-        SimpleTextCard simpleTextCard= new SimpleTextCard("card0");
+        SimpleTextCard simpleTextCard = new SimpleTextCard("card0");
+
+        simpleTextCard.setHeaderText("Constructify");
+        simpleTextCard.setTitleText("Task Update");
+        String[] messages = {"Your new active task is:", "Task B", "Please update your previous task completion percentage"};
+        simpleTextCard.setMessageText(messages);
+        simpleTextCard.setReceivingEvents(true);
         listCard.add(simpleTextCard);
 
-        simpleTextCard= new SimpleTextCard("card1");
-        listCard.add(simpleTextCard);
 
         return new RemoteDeckOfCards(this, listCard);
+    }
+
+    public void alertAndChange(View view) {
+        new AlertDialog.Builder(this)
+                .setTitle("Set As Current Task")
+                .setMessage("Are you sure you want to make this the active task?")
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        ImageButton imageButton = (ImageButton) findViewById(R.id.taskButton);
+                        imageButton.setImageResource(R.drawable.placeholder);
+                        appNotify();
+                        sendNotification();
+
+                    }
+                })
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // do nothing
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 }
