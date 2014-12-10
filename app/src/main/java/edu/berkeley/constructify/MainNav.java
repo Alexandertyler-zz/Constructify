@@ -1,11 +1,13 @@
 package edu.berkeley.constructify;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.view.Menu;
@@ -46,7 +48,7 @@ public class MainNav extends Activity {
     //TOQ VARS
     private final static String PREFS_FILE= "prefs_file";
     private final static String DECK_OF_CARDS_KEY= "deck_of_cards_key";
-    private final static String DECK_OF_CARDS_VERSION_KEY= "01";
+    private final static String DECK_OF_CARDS_VERSION_KEY= "03";
 
     private DeckOfCardsEventListener deckOfCardsEventListener;
 
@@ -66,23 +68,7 @@ public class MainNav extends Activity {
         mDeckOfCardsManager = DeckOfCardsManager.getInstance(getApplicationContext());
         toqReceiver = new ToqBroadcastReceiver();
 
-        deckOfCardsEventListener= new DeckOfCardsEventListener() {
-            @Override
-            public void onCardOpen(String s) {
-                appNotify();
-            }
-            @Override
-            public void onCardVisible(String s) {}
-            @Override
-            public void onCardInvisible(String s) {}
-            @Override
-            public void onCardClosed(String s) {}
-            @Override
-            public void onMenuOptionSelected(String s, String s2) {}
-            @Override
-            public void onMenuOptionSelected(String s, String s2, String s3) {}
-        };
-
+        deckOfCardsEventListener= new DeckOfCardsEventListenerImpl();
         init();
 
     }
@@ -114,7 +100,36 @@ public class MainNav extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    private class DeckOfCardsEventListenerImpl implements DeckOfCardsEventListener {
+
+        public void onCardOpen(final String cardId) {}
+
+        public void onCardVisible(final String cardId) {
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    appNotify();
+                    //Toast.makeText(toqFsm.this, cardId, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        public void onCardInvisible(final String cardId) {}
+
+        public void onCardClosed(final String cardId) {}
+
+        public void onMenuOptionSelected(final String cardId, final String menuOption) {}
+
+        public void onMenuOptionSelected(final String cardId, final String menuOption, final String quickReplyOption) {}
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     public void appNotify() {
+        Toast.makeText(this, "A recent task has been updated by a worker.", Toast.LENGTH_LONG).show();
+
+        ImageButton imageButton = (ImageButton) findViewById(R.id.taskButton);
+        imageButton.setBackground(getResources().getDrawable(R.drawable.const3));
+
+
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext())
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle("Constructify Update")
@@ -126,11 +141,6 @@ public class MainNav extends Activity {
 
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         manager.notify(1, mBuilder.build());
-
-        Toast.makeText(this, "A recent task has been updated by a worker.", Toast.LENGTH_LONG).show();
-
-        //ImageButton imageButton = (ImageButton) findViewById(R.id.taskButton);
-        //imageButton.setImageResource(R.drawable.placeholder);
 
     }
 
@@ -163,6 +173,7 @@ public class MainNav extends Activity {
 
     protected void onStart() {
         super.onStart();
+        mDeckOfCardsManager.addDeckOfCardsEventListener(deckOfCardsEventListener);
 
         if (!mDeckOfCardsManager.isConnected()) {
             try {
@@ -423,10 +434,10 @@ public class MainNav extends Activity {
                 .setTitle("Set As Current Task")
                 .setMessage("Are you sure you want to make this the active task?")
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
                     public void onClick(DialogInterface dialog, int which) {
                         ImageButton imageButton = (ImageButton) findViewById(R.id.taskButton);
-                        imageButton.setImageResource(R.drawable.placeholder);
-                        appNotify();
+                        imageButton.setBackground(getResources().getDrawable(R.drawable.const3));
                         sendNotification();
 
                     }
