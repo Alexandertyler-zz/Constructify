@@ -133,7 +133,7 @@ public class MainNav extends Activity {
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext())
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle("Constructify Update")
-                .setContentText("A recent task has been updated by a worker.");
+                .setContentText("Peter Kim just updated 'Adding Support Beams' to 85%");
 
         Intent resultIntent = new Intent(this, MainNav.class);
         PendingIntent resultPendingIntent = PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -147,7 +147,10 @@ public class MainNav extends Activity {
 
     private void sendNotification() {
         String[] notificationMsg = new String[2];
-        notificationMsg[0] = "Your main task has been updated.";
+        notificationMsg[0] = "New Task: Task B.\n" +
+                             "Move to cement wall on west wing.\n" +
+                             "How close are support beams to being finished?\n" +
+                             "+ 78% -";
 
 
         // Create a NotificationTextCard
@@ -164,10 +167,10 @@ public class MainNav extends Activity {
         try {
             // Send the notification
             mDeckOfCardsManager.sendNotification(notification);
-            Toast.makeText(this, "Sent Notification", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Update sent to Peter!", Toast.LENGTH_SHORT).show();
         } catch (RemoteDeckOfCardsException e) {
             e.printStackTrace();
-            Toast.makeText(this, "Failed to send Notification", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Peter didn't get notification :(", Toast.LENGTH_SHORT).show();
         }
     }
 
