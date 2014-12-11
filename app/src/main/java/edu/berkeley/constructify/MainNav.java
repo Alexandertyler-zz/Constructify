@@ -148,9 +148,9 @@ public class MainNav extends Activity {
     private void sendNotification() {
         String[] notificationMsg = new String[2];
         notificationMsg[0] = "New Task: Task B.\n" +
-                             "Move to cement wall on west wing.\n" +
-                             "How close are support beams to being finished?\n" +
-                             "+ 78% -";
+                "Move to cement wall on west wing.\n" +
+                "How close are support beams to being finished?\n" +
+                "+ 78% -";
 
 
         // Create a NotificationTextCard
